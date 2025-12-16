@@ -111,6 +111,9 @@
     .highlight { border-left: 3px solid var(--accent); padding-left: 10px; }
     .empty { text-align: center; color: var(--muted); padding: 20px; }
     .media { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .option-list { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+    .option-list label { display: flex; align-items: center; gap: 8px; width: 100%; }
+    .option-list input[type="radio"] { margin: 0; }
     .status {
       background: rgba(16, 185, 129, 0.15);
       color: #bbf7d0;
@@ -450,7 +453,7 @@
           let inputEl = null;
           if (options && Object.keys(options).length) {
             const optionList = document.createElement('div');
-            optionList.className = 'grid';
+            optionList.className = 'option-list';
             Object.entries(options).forEach(([key, value]) => {
               const label = document.createElement('label');
               label.style.display = 'flex';
@@ -495,6 +498,18 @@
 
           const normalizedAnswers = (value) => value.split(/;|\||\//).map(v => v.trim()).filter(Boolean);
 
+          const collectHints = (value) => {
+            const hints = [];
+            const addVal = (val) => {
+              if (!val) return;
+              if (typeof val === 'string') { hints.push(val); return; }
+              if (Array.isArray(val)) { val.forEach(addVal); return; }
+              if (typeof val === 'object') { Object.values(val).forEach(addVal); }
+            };
+            addVal(value);
+            return hints;
+          };
+
           const evaluate = () => {
             let userAnswer = '';
             if (inputEl instanceof HTMLDivElement && inputEl.querySelectorAll('input[type="radio"]').length) {
@@ -514,15 +529,18 @@
             const normalizedUser = userAnswer.trim().toLowerCase();
             const isCorrect = (answerKey && normalizedUser === answerKey.trim().toLowerCase()) || acceptable.includes(normalizedUser);
 
-            let message = isCorrect ? 'Nice work! That matches the expected answer.' : 'Keep trying—here is a hint:';
-            const hints = feedback ? Object.values(feedback).filter(Boolean) : [];
+            const hints = collectHints(feedback);
+            if (isCorrect) {
+              feedbackBox.textContent = 'Nice work! That matches the expected answer.';
+              return;
+            }
+
             if (hints.length) {
-              message += ` ${hints.join(' ')}`;
+              feedbackBox.textContent = `Keep trying—here is a hint: ${hints[0]}`;
+              return;
             }
-            if (!isCorrect && answerKey) {
-              message += ` (Expected: ${answerKey})`;
-            }
-            feedbackBox.textContent = message;
+
+            feedbackBox.textContent = 'Keep trying—review the explanation above for a clue.';
           };
 
           checkBtn.addEventListener('click', evaluate);
