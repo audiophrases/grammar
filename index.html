@@ -354,12 +354,41 @@
         </div>
       `;
 
+      const explanationText = textByLang(point, 'explanation');
+      const explanationSections = explanationText
+        .split(/\n|\|/)
+        .map(section => section.trim())
+        .filter(Boolean)
+        .map(section => {
+          const match = section.match(/^([^:–-]+)\s*[:–-]\s*(.+)$/);
+          if (match) {
+            return `<li><strong>${match[1].trim()}:</strong> ${match[2].trim()}</li>`;
+          }
+          return `<li>${section}</li>`;
+        })
+        .join('');
+
+      const formPattern = point.form_pattern || '';
+      const formPairs = formPattern
+        .split('|')
+        .map(part => part.trim())
+        .filter(Boolean);
+
+      const formContent = formPairs.length >= 2
+        ? `<div class="grid two" style="margin-top:8px;">${formPairs.map(pair => {
+            const match = pair.match(/^([^:–-]+)\s*[:–-]\s*(.+)$/);
+            const title = match ? match[1].trim() : '';
+            const body = match ? match[2].trim() : pair;
+            return `<div class="card" style="border-color: var(--border);">${title ? `<div class="section-title">${title}</div>` : ''}<div>${body}</div></div>`;
+          }).join('')}</div>`
+        : (formPattern ? `<p><strong>Form:</strong> ${formPattern}</p>` : '');
+
       const explanation = document.createElement('div');
       explanation.className = 'card';
       explanation.innerHTML = `
         <div class="section-title">Explanation</div>
-        <div class="highlight">${textByLang(point, 'explanation').replace(/\n/g, '<br>')}</div>
-        ${point.form_pattern ? `<p><strong>Form:</strong> ${point.form_pattern}</p>` : ''}
+        <div class="highlight">${explanationSections ? `<ul>${explanationSections}</ul>` : ''}</div>
+        ${formContent}
         ${textByLang(point, 'meaning_use') ? `<p><strong>Use:</strong> ${textByLang(point, 'meaning_use')}</p>` : ''}
         ${textByLang(point, 'common_errors') ? `<p><strong class="error-title">Common errors:</strong> ${textByLang(point, 'common_errors')}</p>` : ''}
         <div class="grid two" style="margin-top:8px;">
