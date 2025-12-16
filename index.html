@@ -106,6 +106,7 @@
     .grid { display: grid; gap: 10px; }
     .grid.two { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
     .section-title { margin-bottom: 6px; color: #cbd5e1; font-weight: 600; }
+    .error-title { color: #f87171; }
     ul { margin: 0; padding-left: 20px; }
     .highlight { border-left: 3px solid var(--accent); padding-left: 10px; }
     .empty { text-align: center; color: var(--muted); padding: 20px; }
@@ -131,7 +132,6 @@
       <div class="row" style="justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
         <div>
           <h1>ESL Grammar Studio</h1>
-          <p class="muted">Lessons and practice pulled straight from live spreadsheets. Browse by level, open a grammar point, and jump into exercises right away.</p>
         </div>
         <div class="pill-toggle" aria-label="Language toggle">
           <button id="lang-en" class="active" data-lang="en">English</button>
@@ -149,11 +149,11 @@
         </div>
         <div class="row" style="gap: 10px;">
           <div style="flex:1">
-            <label for="level">CEFR level</label>
+            <label for="level" aria-label="Level"></label>
             <select id="level"><option value="">All levels</option></select>
           </div>
           <div style="flex:1">
-            <label for="thread">Thread</label>
+            <label for="thread" aria-label="Strand"></label>
             <select id="thread"><option value="">All strands</option></select>
           </div>
         </div>
@@ -240,7 +240,7 @@
       state.practiceByPoint = groupPracticeByPoint(state.practiceItems);
       populateFilters();
       renderList();
-      els.dataStatus.textContent = 'Live data loaded';
+      els.dataStatus.textContent = 'Data loaded';
     }
 
     function groupPracticeByPoint(items) {
@@ -305,7 +305,7 @@
               <h3 style="margin-top:6px;">${point.title_en || point.title_ca || point.point_id}</h3>
               <p class="muted" style="margin: 4px 0;">${point.point_id}</p>
             </div>
-            <div class="muted" style="font-size:12px; text-align:right;">Updated ${point.updated_at || '—'}</div>
+            <div class="muted" style="font-size:12px; text-align:right;"></div>
           </div>
           ${point.tags ? `<div class="row" style="margin-top:6px;">${point.tags.split(';').map(t => `<span class="badge tag">${t}</span>`).join('')}</div>` : ''}
         `;
@@ -350,7 +350,6 @@
           <p class="muted" style="margin-top:4px;">${point.point_id}</p>
         </div>
         <div style="text-align:right;" class="muted">
-          <div>Updated: ${point.updated_at || '—'}</div>
           ${point.version ? `<div>v${point.version}</div>` : ''}
         </div>
       `;
@@ -362,7 +361,7 @@
         <div class="highlight">${textByLang(point, 'explanation').replace(/\n/g, '<br>')}</div>
         ${point.form_pattern ? `<p><strong>Form:</strong> ${point.form_pattern}</p>` : ''}
         ${textByLang(point, 'meaning_use') ? `<p><strong>Use:</strong> ${textByLang(point, 'meaning_use')}</p>` : ''}
-        ${textByLang(point, 'common_errors') ? `<p><strong>Common errors:</strong> ${textByLang(point, 'common_errors')}</p>` : ''}
+        ${textByLang(point, 'common_errors') ? `<p><strong class="error-title">Common errors:</strong> ${textByLang(point, 'common_errors')}</p>` : ''}
         <div class="grid two" style="margin-top:8px;">
           ${point.example_1_en ? `<div class="card" style="border-color: var(--border);"><div class="section-title">Example 1</div><div>${point.example_1_en}</div>${point.example_1_ca ? `<div class="muted">${point.example_1_ca}</div>` : ''}</div>` : ''}
           ${point.example_2_en ? `<div class="card" style="border-color: var(--border);"><div class="section-title">Example 2</div><div>${point.example_2_en}</div>${point.example_2_ca ? `<div class="muted">${point.example_2_ca}</div>` : ''}</div>` : ''}
@@ -385,33 +384,9 @@
         </div>
       `;
 
-      const media = document.createElement('div');
-      media.className = 'card';
-      media.innerHTML = '<div class="section-title">Media</div>';
-      const mediaRow = document.createElement('div');
-      mediaRow.className = 'media';
-      if (point.image_url) {
-        const img = document.createElement('img');
-        img.src = point.image_url;
-        img.alt = point.title_en || point.point_id;
-        img.style.maxWidth = '180px';
-        img.style.borderRadius = '10px';
-        mediaRow.appendChild(img);
-      }
-      if (point.audio_url) {
-        const audio = document.createElement('audio');
-        audio.controls = true;
-        audio.src = point.audio_url;
-        mediaRow.appendChild(audio);
-      }
-      if (!point.image_url && !point.audio_url) {
-        mediaRow.innerHTML = '<p class="muted">No media attached.</p>';
-      }
-      media.appendChild(mediaRow);
-
       const exercises = document.createElement('div');
       exercises.className = 'card';
-      exercises.innerHTML = `<div class="section-title">Practice (${practice.length || '0'})</div>`;
+      exercises.innerHTML = `<div class="section-title">Practice</div>`;
       if (!practice.length) {
         const empty = document.createElement('p');
         empty.className = 'muted';
@@ -438,11 +413,93 @@
             <p style="margin:6px 0;">${instructions || ''}</p>
             <p class="muted" style="margin:4px 0; font-size:12px;">Prompt: ${item.item_lang || '—'} · Expected answer: ${item.answer_lang || '—'}</p>
             <div class="highlight">${item.item_text}</div>
-            ${item.answer_key ? `<p><strong>Answer:</strong> ${item.answer_key}</p>` : ''}
-            ${item.acceptable_answers ? `<p class="muted" style="font-size:13px;">Also accept: ${item.acceptable_answers}</p>` : ''}
-            ${options ? `<div><strong>Options:</strong> <ul>${Object.entries(options).map(([k,v]) => `<li>${k.toUpperCase()}: ${v}</li>`).join('')}</ul></div>` : ''}
-            ${feedback ? `<div class="muted" style="font-size:13px;">Feedback hints available.</div>` : ''}
           `;
+
+          const responseArea = document.createElement('div');
+          responseArea.style.marginTop = '8px';
+
+          let inputEl = null;
+          if (options && Object.keys(options).length) {
+            const optionList = document.createElement('div');
+            optionList.className = 'grid';
+            Object.entries(options).forEach(([key, value]) => {
+              const label = document.createElement('label');
+              label.style.display = 'flex';
+              label.style.alignItems = 'center';
+              label.style.gap = '8px';
+              const radio = document.createElement('input');
+              radio.type = 'radio';
+              radio.name = item.item_id;
+              radio.value = value;
+              label.appendChild(radio);
+              const text = document.createElement('span');
+              text.textContent = `${key.toUpperCase()}: ${value}`;
+              label.appendChild(text);
+              optionList.appendChild(label);
+            });
+            inputEl = optionList;
+            responseArea.appendChild(optionList);
+          } else {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = 'Type your answer';
+            input.style.width = '100%';
+            inputEl = input;
+            responseArea.appendChild(input);
+          }
+
+          const controls = document.createElement('div');
+          controls.style.marginTop = '8px';
+          const checkBtn = document.createElement('button');
+          checkBtn.textContent = 'Check answer';
+          checkBtn.style.border = '1px solid var(--border)';
+          checkBtn.style.background = '#0b1220';
+          checkBtn.style.color = '#e2e8f0';
+          checkBtn.style.padding = '8px 12px';
+          checkBtn.style.borderRadius = '8px';
+          checkBtn.style.cursor = 'pointer';
+          controls.appendChild(checkBtn);
+
+          const feedbackBox = document.createElement('div');
+          feedbackBox.className = 'muted';
+          feedbackBox.style.marginTop = '8px';
+
+          const normalizedAnswers = (value) => value.split(/;|\||\//).map(v => v.trim()).filter(Boolean);
+
+          const evaluate = () => {
+            let userAnswer = '';
+            if (inputEl instanceof HTMLDivElement && inputEl.querySelectorAll('input[type="radio"]').length) {
+              const checked = inputEl.querySelector('input[type="radio"]:checked');
+              userAnswer = checked ? checked.value : '';
+            } else if (inputEl instanceof HTMLInputElement) {
+              userAnswer = inputEl.value;
+            }
+
+            if (!userAnswer.trim()) {
+              feedbackBox.textContent = 'Please enter an answer first.';
+              return;
+            }
+
+            const answerKey = item.answer_key || '';
+            const acceptable = normalizedAnswers(item.acceptable_answers || '').map(v => v.toLowerCase());
+            const normalizedUser = userAnswer.trim().toLowerCase();
+            const isCorrect = (answerKey && normalizedUser === answerKey.trim().toLowerCase()) || acceptable.includes(normalizedUser);
+
+            let message = isCorrect ? 'Nice work! That matches the expected answer.' : 'Keep trying—here is a hint:';
+            const hints = feedback ? Object.values(feedback).filter(Boolean) : [];
+            if (hints.length) {
+              message += ` ${hints.join(' ')}`;
+            }
+            if (!isCorrect && answerKey) {
+              message += ` (Expected: ${answerKey})`;
+            }
+            feedbackBox.textContent = message;
+          };
+
+          checkBtn.addEventListener('click', evaluate);
+          responseArea.appendChild(controls);
+          responseArea.appendChild(feedbackBox);
+          block.appendChild(responseArea);
           if (mediaData) {
             const mediaRow = document.createElement('div');
             mediaRow.className = 'media';
@@ -466,7 +523,32 @@
         });
       }
 
-      els.detail.append(header, explanation, links, media, exercises, footerNote(point));
+      const mediaPieces = [];
+      if (point.image_url || point.audio_url) {
+        const media = document.createElement('div');
+        media.className = 'card';
+        media.innerHTML = '<div class="section-title">Media</div>';
+        const mediaRow = document.createElement('div');
+        mediaRow.className = 'media';
+        if (point.image_url) {
+          const img = document.createElement('img');
+          img.src = point.image_url;
+          img.alt = point.title_en || point.point_id;
+          img.style.maxWidth = '180px';
+          img.style.borderRadius = '10px';
+          mediaRow.appendChild(img);
+        }
+        if (point.audio_url) {
+          const audio = document.createElement('audio');
+          audio.controls = true;
+          audio.src = point.audio_url;
+          mediaRow.appendChild(audio);
+        }
+        media.appendChild(mediaRow);
+        mediaPieces.push(media);
+      }
+
+      els.detail.append(header, explanation, links, ...mediaPieces, exercises, footerNote(point));
       els.detail.querySelectorAll('a[data-related]').forEach(anchor => {
         anchor.addEventListener('click', (e) => {
           e.preventDefault();
@@ -479,7 +561,7 @@
     function footerNote(point) {
       const foot = document.createElement('div');
       foot.className = 'footer';
-      foot.innerHTML = `Tags: ${point.tags || '—'} · Thread: ${point.thread_id || '—'}`;
+      foot.innerHTML = `Tags: ${point.tags || '—'}`;
       return foot;
     }
 
