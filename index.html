@@ -1,1 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ESL Grammar Studio</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --accent: #38bdf8;
+      --muted: #94a3b8;
+      --border: #1f2937;
+      --card: #0b1220;
+      --success: #10b981;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 25%),
+                  radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.08), transparent 30%),
+                  var(--bg);
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    h1, h2, h3 { margin: 0; }
+    a { color: var(--accent); }
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+    }
+    header {
+      max-width: 1200px;
+      margin: 0 auto 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .hero {
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(16, 185, 129, 0.08));
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 16px;
+    }
+    .muted { color: var(--muted); }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .filters { display: grid; gap: 12px; }
+    label { font-size: 13px; color: var(--muted); }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0b1220;
+      color: #e2e8f0;
+    }
+    input:focus, select:focus { outline: 1px solid var(--accent); }
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: calc(100vh - 180px);
+      overflow: auto;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .point-card { cursor: pointer; }
+    .point-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; font-size: 12px; }
+    .badge.level { background: rgba(56, 189, 248, 0.12); color: #bae6fd; }
+    .badge.thread { background: rgba(16, 185, 129, 0.12); color: #a7f3d0; }
+    .badge.tag { background: rgba(148, 163, 184, 0.12); color: #cbd5e1; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .detail { display: grid; gap: 12px; }
+    .pill-toggle {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      background: #0b1220;
+    }
+    .pill-toggle button {
+      border: none;
+      padding: 8px 14px;
+      background: none;
+      color: #e2e8f0;
+      cursor: pointer;
+    }
+    .pill-toggle button.active { background: var(--accent); color: #0b1220; }
+    .grid { display: grid; gap: 10px; }
+    .grid.two { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .section-title { margin-bottom: 6px; color: #cbd5e1; font-weight: 600; }
+    ul { margin: 0; padding-left: 20px; }
+    .highlight { border-left: 3px solid var(--accent); padding-left: 10px; }
+    .empty { text-align: center; color: var(--muted); padding: 20px; }
+    .media { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .status {
+      background: rgba(16, 185, 129, 0.15);
+      color: #bbf7d0;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    .footer { color: var(--muted); font-size: 12px; margin-top: 8px; }
+    @media (max-width: 960px) {
+      .shell { grid-template-columns: 1fr; }
+      .list { max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero">
+      <div class="row" style="justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div>
+          <h1>ESL Grammar Studio</h1>
+          <p class="muted">Lessons and practice pulled straight from live spreadsheets. Browse by level, open a grammar point, and jump into exercises right away.</p>
+        </div>
+        <div class="pill-toggle" aria-label="Language toggle">
+          <button id="lang-en" class="active" data-lang="en">English</button>
+          <button id="lang-ca" data-lang="ca">Catalan</button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="shell">
+    <aside class="panel" aria-label="Filters and grammar points">
+      <div class="filters">
+        <div>
+          <label for="search">Search lessons</label>
+          <input id="search" type="search" placeholder="Title, tag, or point ID" />
+        </div>
+        <div class="row" style="gap: 10px;">
+          <div style="flex:1">
+            <label for="level">CEFR level</label>
+            <select id="level"><option value="">All levels</option></select>
+          </div>
+          <div style="flex:1">
+            <label for="thread">Thread</label>
+            <select id="thread"><option value="">All strands</option></select>
+          </div>
+        </div>
+        <div class="row" style="justify-content: space-between;">
+          <div class="muted" id="counts">Loading…</div>
+          <div class="status" id="data-status">Fetching data…</div>
+        </div>
+      </div>
+      <div class="list" id="points-list" aria-live="polite"></div>
+    </aside>
+    <section class="panel detail" id="detail-panel" aria-live="polite">
+      <div class="empty" id="empty-state">Select a grammar point to see explanations and exercises.</div>
+    </section>
+  </main>
+  <script>
+    const GRAMMAR_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQVRtxu8NCcv04qR_5yNY-lUaUqkzLTKouAoDI5vgh31AX6VRKxmjsMr9wgzDAvg_Qht3kCKE8VOUvU/pub?gid=253795148&single=true&output=csv';
+    const PRACTICE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQVRtxu8NCcv04qR_5yNY-lUaUqkzLTKouAoDI5vgh31AX6VRKxmjsMr9wgzDAvg_Qht3kCKE8VOUvU/pub?gid=617041161&single=true&output=csv';
 
+    const state = {
+      lang: 'en',
+      grammarPoints: [],
+      practiceItems: [],
+      practiceByPoint: new Map(),
+      selected: null,
+    };
+
+    const els = {
+      list: document.getElementById('points-list'),
+      detail: document.getElementById('detail-panel'),
+      empty: document.getElementById('empty-state'),
+      counts: document.getElementById('counts'),
+      dataStatus: document.getElementById('data-status'),
+      level: document.getElementById('level'),
+      thread: document.getElementById('thread'),
+      search: document.getElementById('search'),
+      langButtons: document.querySelectorAll('.pill-toggle button'),
+    };
+
+    const textByLang = (item, key) => item[`${key}_${state.lang}`] || item[`${key}_en`] || '';
+
+    function parseCSV(text) {
+      const rows = [];
+      let current = '';
+      let inQuotes = false;
+      const cells = [];
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
+        if (char === '"') {
+          if (inQuotes && next === '"') { current += '"'; i++; continue; }
+          inQuotes = !inQuotes;
+          continue;
+        }
+        if (char === ',' && !inQuotes) { cells.push(current); current = ''; continue; }
+        if ((char === '\n' || char === '\r') && !inQuotes) {
+          if (current !== '' || cells.length) { cells.push(current); rows.push(cells.slice()); cells.length = 0; current = ''; }
+          continue;
+        }
+        current += char;
+      }
+      if (current !== '' || cells.length) { cells.push(current); rows.push(cells); }
+      if (!rows.length) return [];
+      const headers = rows[0];
+      return rows.slice(1).filter(r => r.length && r.some(cell => cell.trim() !== '')).map(row => {
+        const obj = {};
+        headers.forEach((h, idx) => { obj[h.trim()] = row[idx] ? row[idx].trim() : ''; });
+        return obj;
+      });
+    }
+
+    function parseJsonSafe(value) {
+      if (!value) return null;
+      try { return JSON.parse(value); } catch { return null; }
+    }
+
+    async function loadData() {
+      els.dataStatus.textContent = 'Fetching data…';
+      const [grammarText, practiceText] = await Promise.all([
+        fetch(GRAMMAR_CSV_URL).then(r => r.text()),
+        fetch(PRACTICE_CSV_URL).then(r => r.text()),
+      ]);
+      state.grammarPoints = parseCSV(grammarText).filter(p => (p.status || '').toUpperCase() !== 'DRAFT');
+      state.practiceItems = parseCSV(practiceText).filter(p => (p.status || '').toUpperCase() !== 'DRAFT');
+      state.practiceByPoint = groupPracticeByPoint(state.practiceItems);
+      populateFilters();
+      renderList();
+      els.dataStatus.textContent = 'Live data loaded';
+    }
+
+    function groupPracticeByPoint(items) {
+      const map = new Map();
+      items.forEach(item => {
+        const key = item.point_id;
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(item);
+      });
+      map.forEach(list => list.sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0)));
+      return map;
+    }
+
+    function populateFilters() {
+      const levels = new Set();
+      const threads = new Set();
+      state.grammarPoints.forEach(p => { if (p.cefr_level) levels.add(p.cefr_level); if (p.thread_id) threads.add(p.thread_id); });
+      [...levels].sort().forEach(level => {
+        const opt = document.createElement('option');
+        opt.value = level; opt.textContent = level; els.level.appendChild(opt);
+      });
+      [...threads].sort().forEach(thread => {
+        const opt = document.createElement('option');
+        opt.value = thread; opt.textContent = thread; els.thread.appendChild(opt);
+      });
+    }
+
+    function renderList() {
+      const term = els.search.value.trim().toLowerCase();
+      const level = els.level.value;
+      const thread = els.thread.value;
+      els.list.innerHTML = '';
+      const filtered = state.grammarPoints.filter(p => {
+        const matchesLevel = !level || p.cefr_level === level;
+        const matchesThread = !thread || p.thread_id === thread;
+        const haystack = [p.point_id, p.title_en, p.title_ca, p.tags].join(' ').toLowerCase();
+        const matchesTerm = !term || haystack.includes(term);
+        return matchesLevel && matchesThread && matchesTerm;
+      }).sort((a, b) => (a.cefr_level || '').localeCompare(b.cefr_level || '') || Number(a.sort_order || 0) - Number(b.sort_order || 0));
+
+      els.counts.textContent = `${filtered.length} lesson${filtered.length === 1 ? '' : 's'}`;
+      if (!filtered.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'No lessons match your filters yet.';
+        els.list.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach(point => {
+        const card = document.createElement('div');
+        card.className = 'card point-card';
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.innerHTML = `
+          <div class="row" style="justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div class="row">
+                <span class="badge level">${point.cefr_level || '—'}</span>
+                ${point.thread_id ? `<span class="badge thread">${point.thread_id}</span>` : ''}
+              </div>
+              <h3 style="margin-top:6px;">${point.title_en || point.title_ca || point.point_id}</h3>
+              <p class="muted" style="margin: 4px 0;">${point.point_id}</p>
+            </div>
+            <div class="muted" style="font-size:12px; text-align:right;">Updated ${point.updated_at || '—'}</div>
+          </div>
+          ${point.tags ? `<div class="row" style="margin-top:6px;">${point.tags.split(';').map(t => `<span class="badge tag">${t}</span>`).join('')}</div>` : ''}
+        `;
+        card.addEventListener('click', () => selectPoint(point.point_id));
+        card.addEventListener('keypress', (e) => { if (e.key === 'Enter') selectPoint(point.point_id); });
+        els.list.appendChild(card);
+      });
+    }
+
+    function selectPoint(pointId) {
+      const point = state.grammarPoints.find(p => p.point_id === pointId);
+      state.selected = point || null;
+      renderDetail();
+    }
+
+    function relatedLink(id) {
+      const title = (state.grammarPoints.find(p => p.point_id === id) || {}).title_en || id;
+      return `<a href="#" data-related="${id}">${title}</a>`;
+    }
+
+    function renderDetail() {
+      els.detail.innerHTML = '';
+      if (!state.selected) {
+        els.detail.appendChild(els.empty);
+        els.empty.style.display = 'block';
+        return;
+      }
+      els.empty.style.display = 'none';
+      const point = state.selected;
+      const practice = state.practiceByPoint.get(point.point_id) || [];
+
+      const header = document.createElement('div');
+      header.className = 'row';
+      header.style.justifyContent = 'space-between';
+      header.innerHTML = `
+        <div>
+          <div class="row" style="gap:8px; align-items:center;">
+            <span class="badge level">${point.cefr_level || '—'}</span>
+            ${point.thread_id ? `<span class="badge thread">${point.thread_id}</span>` : ''}
+          </div>
+          <h2 style="margin-top:6px;">${textByLang(point, 'title') || point.point_id}</h2>
+          <p class="muted" style="margin-top:4px;">${point.point_id}</p>
+        </div>
+        <div style="text-align:right;" class="muted">
+          <div>Updated: ${point.updated_at || '—'}</div>
+          ${point.version ? `<div>v${point.version}</div>` : ''}
+        </div>
+      `;
+
+      const explanation = document.createElement('div');
+      explanation.className = 'card';
+      explanation.innerHTML = `
+        <div class="section-title">Explanation</div>
+        <div class="highlight">${textByLang(point, 'explanation').replace(/\n/g, '<br>')}</div>
+        ${point.form_pattern ? `<p><strong>Form:</strong> ${point.form_pattern}</p>` : ''}
+        ${textByLang(point, 'meaning_use') ? `<p><strong>Use:</strong> ${textByLang(point, 'meaning_use')}</p>` : ''}
+        ${textByLang(point, 'common_errors') ? `<p><strong>Common errors:</strong> ${textByLang(point, 'common_errors')}</p>` : ''}
+        <div class="grid two" style="margin-top:8px;">
+          ${point.example_1_en ? `<div class="card" style="border-color: var(--border);"><div class="section-title">Example 1</div><div>${point.example_1_en}</div>${point.example_1_ca ? `<div class="muted">${point.example_1_ca}</div>` : ''}</div>` : ''}
+          ${point.example_2_en ? `<div class="card" style="border-color: var(--border);"><div class="section-title">Example 2</div><div>${point.example_2_en}</div>${point.example_2_ca ? `<div class="muted">${point.example_2_ca}</div>` : ''}</div>` : ''}
+        </div>
+      `;
+
+      const links = document.createElement('div');
+      links.className = 'grid two';
+      links.innerHTML = `
+        <div class="card">
+          <div class="section-title">Learning path</div>
+          <ul>
+            ${point.parent_point_id ? `<li>Previous: ${relatedLink(point.parent_point_id)}</li>` : '<li>Previous: —</li>'}
+            ${point.next_point_id ? `<li>Next: ${relatedLink(point.next_point_id)}</li>` : '<li>Next: —</li>'}
+          </ul>
+        </div>
+        <div class="card">
+          <div class="section-title">Related</div>
+          ${point.related_point_ids ? `<div class="row" style="gap:6px;">${point.related_point_ids.split(';').map(id => `<span class="badge tag">${relatedLink(id)}</span>`).join('')}</div>` : '<p class="muted">None listed.</p>'}
+        </div>
+      `;
+
+      const media = document.createElement('div');
+      media.className = 'card';
+      media.innerHTML = '<div class="section-title">Media</div>';
+      const mediaRow = document.createElement('div');
+      mediaRow.className = 'media';
+      if (point.image_url) {
+        const img = document.createElement('img');
+        img.src = point.image_url;
+        img.alt = point.title_en || point.point_id;
+        img.style.maxWidth = '180px';
+        img.style.borderRadius = '10px';
+        mediaRow.appendChild(img);
+      }
+      if (point.audio_url) {
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.src = point.audio_url;
+        mediaRow.appendChild(audio);
+      }
+      if (!point.image_url && !point.audio_url) {
+        mediaRow.innerHTML = '<p class="muted">No media attached.</p>';
+      }
+      media.appendChild(mediaRow);
+
+      const exercises = document.createElement('div');
+      exercises.className = 'card';
+      exercises.innerHTML = `<div class="section-title">Practice (${practice.length || '0'})</div>`;
+      if (!practice.length) {
+        const empty = document.createElement('p');
+        empty.className = 'muted';
+        empty.textContent = 'No practice items linked to this point yet.';
+        exercises.appendChild(empty);
+      } else {
+        practice.forEach(item => {
+          const options = parseJsonSafe(item.options_json);
+          const feedback = parseJsonSafe(item.feedback_json);
+          const mediaData = parseJsonSafe(item.media_json);
+          const block = document.createElement('div');
+          block.className = 'card';
+          block.style.borderColor = 'var(--border)';
+          block.style.marginTop = '10px';
+          const instructions = state.lang === 'ca' ? (item.instructions_ca || item.instructions_en) : (item.instructions_en || item.instructions_ca);
+          block.innerHTML = `
+            <div class="row" style="justify-content: space-between;">
+              <div class="row" style="gap:6px;">
+                <span class="badge level">${item.cefr_level || point.cefr_level || '—'}</span>
+                <span class="badge thread">${item.activity_type || 'Activity'}</span>
+              </div>
+              <span class="muted" style="font-size:12px;">${item.item_id}</span>
+            </div>
+            <p style="margin:6px 0;">${instructions || ''}</p>
+            <p class="muted" style="margin:4px 0; font-size:12px;">Prompt: ${item.item_lang || '—'} · Expected answer: ${item.answer_lang || '—'}</p>
+            <div class="highlight">${item.item_text}</div>
+            ${item.answer_key ? `<p><strong>Answer:</strong> ${item.answer_key}</p>` : ''}
+            ${item.acceptable_answers ? `<p class="muted" style="font-size:13px;">Also accept: ${item.acceptable_answers}</p>` : ''}
+            ${options ? `<div><strong>Options:</strong> <ul>${Object.entries(options).map(([k,v]) => `<li>${k.toUpperCase()}: ${v}</li>`).join('')}</ul></div>` : ''}
+            ${feedback ? `<div class="muted" style="font-size:13px;">Feedback hints available.</div>` : ''}
+          `;
+          if (mediaData) {
+            const mediaRow = document.createElement('div');
+            mediaRow.className = 'media';
+            if (mediaData.image) {
+              const img = document.createElement('img');
+              img.src = mediaData.image;
+              img.alt = 'Exercise image';
+              img.style.maxWidth = '160px';
+              img.style.borderRadius = '10px';
+              mediaRow.appendChild(img);
+            }
+            if (mediaData.audio) {
+              const audio = document.createElement('audio');
+              audio.controls = true;
+              audio.src = mediaData.audio;
+              mediaRow.appendChild(audio);
+            }
+            if (mediaRow.children.length) block.appendChild(mediaRow);
+          }
+          exercises.appendChild(block);
+        });
+      }
+
+      els.detail.append(header, explanation, links, media, exercises, footerNote(point));
+      els.detail.querySelectorAll('a[data-related]').forEach(anchor => {
+        anchor.addEventListener('click', (e) => {
+          e.preventDefault();
+          selectPoint(anchor.dataset.related);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    }
+
+    function footerNote(point) {
+      const foot = document.createElement('div');
+      foot.className = 'footer';
+      foot.innerHTML = `Tags: ${point.tags || '—'} · Thread: ${point.thread_id || '—'}`;
+      return foot;
+    }
+
+    els.level.addEventListener('change', renderList);
+    els.thread.addEventListener('change', renderList);
+    els.search.addEventListener('input', () => {
+      renderList();
+    });
+
+    els.langButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.lang = btn.dataset.lang;
+        els.langButtons.forEach(b => b.classList.toggle('active', b === btn));
+        renderDetail();
+        renderList();
+      });
+    });
+
+    loadData().catch(() => {
+      els.dataStatus.textContent = 'Failed to load';
+      els.detail.innerHTML = '<div class="empty">Could not load data. Please refresh.</div>';
+    });
+  </script>
+</body>
+</html>
