@@ -496,18 +496,21 @@
           feedbackBox.className = 'muted';
           feedbackBox.style.marginTop = '8px';
 
+          let attemptCount = 0;
+
           const normalizedAnswers = (value) => value.split(/;|\||\//).map(v => v.trim()).filter(Boolean);
 
-          const collectHints = (value) => {
-            const hints = [];
-            const addVal = (val) => {
-              if (!val) return;
-              if (typeof val === 'string') { hints.push(val); return; }
-              if (Array.isArray(val)) { val.forEach(addVal); return; }
-              if (typeof val === 'object') { Object.values(val).forEach(addVal); }
-            };
-            addVal(value);
-            return hints;
+          const localizedFeedback = (key) => {
+            if (!feedback || !feedback[key]) return '';
+            const value = feedback[key];
+            if (typeof value === 'string') return value;
+            if (typeof value === 'object') {
+              if (value[state.lang]) return value[state.lang];
+              if (value.en) return value.en;
+              const first = Object.values(value).find(Boolean);
+              return typeof first === 'string' ? first : '';
+            }
+            return '';
           };
 
           const evaluate = () => {
@@ -529,14 +532,27 @@
             const normalizedUser = userAnswer.trim().toLowerCase();
             const isCorrect = (answerKey && normalizedUser === answerKey.trim().toLowerCase()) || acceptable.includes(normalizedUser);
 
-            const hints = collectHints(feedback);
             if (isCorrect) {
-              feedbackBox.textContent = 'Nice work! That matches the expected answer.';
+              attemptCount = 0;
+              const correctText = localizedFeedback('correct') || 'Nice work! That matches the expected answer.';
+              feedbackBox.textContent = correctText;
               return;
             }
 
-            if (hints.length) {
-              feedbackBox.textContent = `Keep trying—here is a hint: ${hints[0]}`;
+            attemptCount += 1;
+            if (attemptCount === 1) {
+              const hintText = localizedFeedback('hint');
+              if (hintText) {
+                feedbackBox.textContent = hintText;
+                return;
+              }
+              feedbackBox.textContent = 'Keep trying—here is a hint: (not provided).';
+              return;
+            }
+
+            const rememberText = localizedFeedback('wrong') || localizedFeedback('hint');
+            if (rememberText) {
+              feedbackBox.textContent = `Remember: ${rememberText}`;
               return;
             }
 
