@@ -539,17 +539,20 @@
             if (isCorrect) {
               attemptCount = 0;
               const correctText = localizedFeedback('correct') || 'Nice work! That matches the expected answer.';
-              const hasAnswerKey = Boolean(normalizedAnswerKey);
-              const alternatives = acceptableRaw.filter((alt, idx) => acceptable[idx] !== normalizedAnswerKey && alt.trim());
+              const uniqueAlternatives = [];
+              const seen = new Set();
+              const candidateAnswers = [answerKey, ...acceptableRaw].filter(Boolean);
 
-              if (!matchesAnswerKey && hasAnswerKey) {
-                feedbackBox.textContent = `${correctText} "${answerKey}" is also possible.`;
-                return;
-              }
+              candidateAnswers.forEach(candidate => {
+                const normalized = candidate.trim().toLowerCase();
+                if (!normalized || normalized === normalizedUser || seen.has(normalized)) return;
+                seen.add(normalized);
+                uniqueAlternatives.push(candidate);
+              });
 
-              if (matchesAnswerKey && alternatives.length) {
-                const altList = alternatives.map(a => `"${a}"`).join(', ');
-                const verb = alternatives.length > 1 ? 'are' : 'is';
+              if (uniqueAlternatives.length) {
+                const altList = uniqueAlternatives.map(a => `"${a}"`).join(', ');
+                const verb = uniqueAlternatives.length > 1 ? 'are' : 'is';
                 feedbackBox.textContent = `${correctText} ${altList} ${verb} also possible.`;
                 return;
               }
