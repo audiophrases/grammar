@@ -386,17 +386,17 @@
 
       const explanationText = textByLang(point, 'explanation');
       const explanationSections = explanationText
-        .split(/\n|\|/)
-        .map(section => section.trim())
-        .filter(Boolean)
-        .map(section => {
-          const match = section.match(/^([^:–-]+)\s*[:–-]\s*(.+)$/);
-          if (match) {
-            return `<li><strong>${match[1].trim()}:</strong> ${match[2].trim()}</li>`;
-          }
-          return `<li>${section}</li>`;
-        })
-        .join('');
+          .split(/\n|\|/)
+          .map(section => section.trim())
+          .filter(Boolean)
+          .map(section => {
+            const match = section.match(/^([A-Za-z][^:–-]*?)\s*[:–-]\s+(.+)$/);
+            if (match) {
+              return `<li><strong>${match[1].trim()}:</strong> ${match[2].trim()}</li>`;
+            }
+            return `<li>${section}</li>`;
+          })
+          .join('');
 
       const formPattern = point.form_pattern || '';
       const formPairs = formPattern
@@ -406,9 +406,9 @@
 
       const formContent = formPairs.length >= 2
         ? `<div class="grid two" style="margin-top:8px;">${formPairs.map(pair => {
-            const match = pair.match(/^([^:–-]+)\s*[:–-]\s*(.+)$/);
-            const title = match ? match[1].trim() : '';
-            const body = match ? match[2].trim() : pair;
+              const match = pair.match(/^([A-Za-z][^:–-]*?)\s*[:–-]\s+(.+)$/);
+              const title = match ? match[1].trim() : '';
+              const body = match ? match[2].trim() : pair;
             return `<div class="card" style="border-color: var(--border);">${title ? `<div class="section-title">${title}</div>` : ''}<div>${body}</div></div>`;
           }).join('')}</div>`
         : (formPattern ? `<p><strong>Form:</strong> ${formPattern}</p>` : '');
