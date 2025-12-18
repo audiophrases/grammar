@@ -220,9 +220,10 @@
       if (current !== '' || cells.length) { cells.push(current); rows.push(cells); }
       if (!rows.length) return [];
       const headers = rows[0];
+      const normalizeCell = (value) => (value ? value.replace(/\\n/g, '\n').trim() : '');
       return rows.slice(1).filter(r => r.length && r.some(cell => cell.trim() !== '')).map(row => {
         const obj = {};
-        headers.forEach((h, idx) => { obj[h.trim()] = row[idx] ? row[idx].trim() : ''; });
+        headers.forEach((h, idx) => { obj[h.trim()] = normalizeCell(row[idx]); });
         return obj;
       });
     }
@@ -241,9 +242,24 @@
       state.grammarPoints = parseCSV(grammarText).filter(p => (p.status || '').toUpperCase() !== 'DRAFT');
       state.practiceItems = parseCSV(practiceText).filter(p => (p.status || '').toUpperCase() !== 'DRAFT');
       state.practiceByPoint = groupPracticeByPoint(state.practiceItems);
+      runRegressionChecks();
       populateFilters();
       renderList();
       els.dataStatus.textContent = 'Data loaded';
+    }
+
+    function runRegressionChecks() {
+      const target = state.grammarPoints.find(p => p.point_id === 'TAGQ_A2_01');
+      if (!target) {
+        console.warn('Regression check skipped: TAGQ_A2_01 not found.');
+        return;
+      }
+      const explanation = target.explanation_en || target.explanation_ca || '';
+      if (explanation.includes('\n')) {
+        console.info('Regression check passed: TAGQ_A2_01 newlines decoded.');
+        return;
+      }
+      console.warn('Regression check failed: expected decoded newlines for TAGQ_A2_01.');
     }
 
     function groupPracticeByPoint(items) {
