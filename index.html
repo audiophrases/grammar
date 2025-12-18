@@ -202,6 +202,13 @@
       let current = '';
       let inQuotes = false;
       const cells = [];
+
+      const decodeEntities = (value) => {
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = value;
+        return textarea.value;
+      };
+
       for (let i = 0; i < text.length; i++) {
         const char = text[i];
         const next = text[i + 1];
@@ -220,7 +227,11 @@
       if (current !== '' || cells.length) { cells.push(current); rows.push(cells); }
       if (!rows.length) return [];
       const headers = rows[0];
-      const normalizeCell = (value) => (value ? value.replace(/\\n/g, '\n').trim() : '');
+      const normalizeCell = (value) => {
+        if (!value) return '';
+        const decoded = decodeEntities(value);
+        return decoded.replace(/\\n/g, '\n').trim();
+      };
       return rows.slice(1).filter(r => r.length && r.some(cell => cell.trim() !== '')).map(row => {
         const obj = {};
         headers.forEach((h, idx) => { obj[h.trim()] = normalizeCell(row[idx]); });
