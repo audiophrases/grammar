@@ -123,6 +123,7 @@
       font-size: 12px;
     }
     .footer { color: var(--muted); font-size: 12px; margin-top: 8px; }
+    .feedback-success { color: var(--success); font-weight: 700; }
     @media (max-width: 960px) {
       .shell { grid-template-columns: 1fr; }
       .list { max-height: none; }
@@ -542,6 +543,7 @@
 
           const evaluate = () => {
             let userAnswer = '';
+            feedbackBox.classList.remove('feedback-success');
             if (inputEl instanceof HTMLDivElement && inputEl.querySelectorAll('input[type="radio"]').length) {
               const checked = inputEl.querySelector('input[type="radio"]:checked');
               userAnswer = checked ? checked.value : '';
@@ -565,26 +567,8 @@
 
             if (isCorrect) {
               attemptCount = 0;
-              const correctText = localizedFeedback('correct') || 'Nice work! That matches the expected answer.';
-              const uniqueAlternatives = [];
-              const seen = new Set();
-              const candidateAnswers = [answerKey, ...acceptableRaw].filter(Boolean);
-
-              candidateAnswers.forEach(candidate => {
-                const normalized = candidate.trim().toLowerCase();
-                if (!normalized || normalized === normalizedUser || seen.has(normalized)) return;
-                seen.add(normalized);
-                uniqueAlternatives.push(candidate);
-              });
-
-              if (uniqueAlternatives.length) {
-                const altList = uniqueAlternatives.map(a => `"${a}"`).join(', ');
-                const verb = uniqueAlternatives.length > 1 ? 'are' : 'is';
-                feedbackBox.textContent = `${correctText} ${altList} ${verb} also possible.`;
-                return;
-              }
-
-              feedbackBox.textContent = correctText;
+              feedbackBox.textContent = 'Correct!';
+              feedbackBox.classList.add('feedback-success');
               return;
             }
 
